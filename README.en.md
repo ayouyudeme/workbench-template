@@ -83,6 +83,8 @@ Checks: stray files in the root, missing scene files, size overruns, missing ind
 
 `可选-界面/` contains a local-only web panel (Python standard library, no dependencies): scene list, identity card, `§0`, memory size, health report, plus a form that writes the cards. Double-click `start.bat`. It is a shell only — delete it and no data is lost. It does not require DSH.
 
+![Scene editor: form on the left, live preview on the right](docs/editor.png)
+
 ## License
 
 MIT.
