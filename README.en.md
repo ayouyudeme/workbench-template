@@ -2,6 +2,8 @@
 
 > One project, one "scene". Identity, memory, index and hard rules live in plain files — not in the chat history, and not tied to a specific AI tool.
 
+![The panel: scene list on the left, scene cards and memory budget on the right](docs/overview.png)
+
 The Chinese README ([README.md](README.md)) is the primary one. This is a short English version.
 
 ## The problem

@@ -37,7 +37,7 @@ INDEX_SMALL_BYTES = 500 * KB  # 小目录：体积下限
 EXEMPT_DIRS = {"归档", "备份", "_临时", "缓存", ".git", "报告", "node_modules", ".venv", "__pycache__"}
 REQUIRED_FILES = ["身份.md", "定位卡.md", "项目信息.md", "会话档案.md"]
 ROOT_ALLOWED = {"00-工作台宪法.md", "AGENTS.md", "README.md", "README.en.md", "LICENSE", ".gitignore",
-                "索引.md", "路线图.md", "场景", "工具", "体检", "可选-界面", "提案", "当前场景.md", "备份", ".git"}
+                "索引.md", "路线图.md", "场景", "工具", "体检", "可选-界面", "提案", "当前场景.md", "备份", "docs", ".git"}
 
 issues: list[tuple[str, str, str]] = []  # (级别, 位置, 说明)
 
