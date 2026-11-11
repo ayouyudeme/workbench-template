@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>工作台 · 场景</title>
+<style>
+  :root{
+    --bg:#0b0f1a; --panel:#111827; --line:#1f2a3d; --txt:#e6edf7; --dim:#8b98ad;
+    --cyan:#38d0f0; --green:#34d399; --red:#f87171; --amber:#fbbf24;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 700px at 20% -10%,#16233b 0%,var(--bg) 55%) fixed;
+    color:var(--txt);font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;font-size:14px}
+  header{display:flex;align-items:center;gap:12px;padding:16px 22px;border-bottom:1px solid var(--line)}
+  header h1{font-size:18px;margin:0;font-weight:600}
+  header h1 span{color:var(--dim);font-weight:400;font-size:12.5px;margin-left:10px}
+  .spacer{flex:1}
+  .chip{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;
+    border:1px solid var(--line);background:#0d1524;color:var(--dim);font-size:12.5px}
+  .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+  .chip.bad .dot{background:var(--red)} .chip.warn .dot{background:var(--amber)}
+  .chip.live{color:#bfe9ff;border-color:#1d5f74;background:#0d2430}
+  button{font:inherit;color:var(--txt);background:#131c2e;border:1px solid var(--line);
+    border-radius:9px;padding:7px 13px;cursor:pointer;transition:.15s}
+  button:hover{border-color:#2f4568;background:#18233a}
+  button.primary{background:#123a4a;border-color:#1d5f74;color:#c8f4ff}
+  button.good{background:#10321f;border-color:#1f6b45;color:#c6f5d8}
+  button.bad{background:#2a1416;border-color:#5a2429;color:#f8c6c9}
+  button:disabled{opacity:.45;cursor:default}
+  main{display:grid;grid-template-columns:290px 1fr;height:calc(100% - 68px)}
+  aside{border-right:1px solid var(--line);overflow:auto;padding:14px 12px 40px}
+  .newbtn{width:100%;text-align:left;padding:11px 12px;border-radius:10px;background:#102a38;
+    border:1px solid #1d5f74;color:#c8f4ff;font-size:14px;margin-bottom:14px}
+  .side-title{font-size:12px;color:var(--dim);letter-spacing:1px;padding:12px 10px 6px}
+  .scene{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;
+    cursor:pointer;border:1px solid transparent;margin-bottom:4px;overflow:hidden}
+  .scene:hover{background:#111b2c}
+  .scene.on{background:#132033;border-color:#26456b}
+  .scene .dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none}
+  .scene .meta{min-width:0;flex:1}
+  .scene .n{font-size:14px;line-height:1.3;display:flex;gap:6px;align-items:center;min-width:0}
+  .scene .n em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .scene .d{font-size:12px;color:var(--dim);margin-top:3px;line-height:1.35;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .side-note{font-size:11.5px;color:#5f6b80;line-height:1.8;padding:12px 10px 0;
+    border-top:1px solid var(--line);margin-top:12px}
+  .badge{font-size:10.5px;border-radius:6px;padding:1px 5px;border:1px solid var(--line);color:var(--dim)}
+  .badge.red{color:#f3b6b6;border-color:#4a1e22;background:#1c1113}
+  .badge.blue{color:#bfe9ff;border-color:#1d5f74;background:#0d2430}
+  .count{background:#1d5f74;color:#d8f6ff;border-radius:999px;padding:0 7px;font-size:11px}
+  section.pane{padding:20px 24px 60px;overflow:auto}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+  .card{background:linear-gradient(180deg,#121c2e,#0e1625);border:1px solid var(--line);
+    border-radius:14px;padding:16px 18px;position:relative;overflow:hidden;cursor:pointer}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,var(--cyan))}
+  .card h3{margin:0 0 4px;font-size:15px}
+  .card .sub{color:var(--dim);font-size:12.5px;margin-bottom:10px}
+  .card .hand{font-size:13px;line-height:1.55;color:#c6d3e6;display:-webkit-box;
+    -webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .bar{height:5px;border-radius:4px;background:#1b2740;overflow:hidden;margin-top:12px}
+  .bar > i{display:block;height:100%;background:var(--green)}
+  .bar.over > i{background:var(--red)} .bar.hot > i{background:var(--amber)}
+  .meter{font-size:11.5px;color:var(--dim);margin-top:5px;display:flex;justify-content:space-between}
+  h2.scene-h{margin:0;font-size:23px}
+  .tag{display:inline-block;font-size:11.5px;color:var(--dim);border:1px solid var(--line);
+    border-radius:7px;padding:2px 8px;margin-right:6px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .kv{display:flex;gap:12px;padding:9px 0;border-bottom:1px dashed #1b2436;font-size:13.5px;line-height:1.5}
+  .kv:last-child{border-bottom:0}
+  .k{font-size:12px;color:var(--dim);width:70px;flex:none}
+  .quote{border-left:2px solid var(--cyan);padding:10px 14px;background:#0c1524;border-radius:0 10px 10px 0;
+    color:#cfe3f5;line-height:1.65;font-size:13.5px}
+  .cols{display:grid;grid-template-columns:1.02fr .98fr;gap:16px;margin-top:16px}
+  @media (max-width:1100px){.cols{grid-template-columns:1fr}}
+  .panel{background:#0f1728;border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .panel h4{margin:0 0 12px;font-size:12.5px;color:var(--dim);font-weight:500;letter-spacing:.6px}
+  ul.plain{margin:0;padding-left:18px;line-height:1.75;font-size:13.5px;color:#cfdaea}
+  .ok{color:var(--green)} .bad{color:var(--red)} .warn{color:var(--amber)}
+  .issue{padding:9px 12px;border-radius:9px;background:#1a1216;border:1px solid #3d2027;margin-bottom:8px;font-size:13px}
+  .issue.w{background:#1a1710;border-color:#3d3320}
+  .files{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .file{font-size:12px;padding:4px 9px;border-radius:8px;border:1px solid var(--line);color:var(--dim)}
+  .file.have{color:#bfe9d3;border-color:#1e4a3a;background:#0e1d18}
+  .file.miss{color:#f3b6b6;border-color:#4a1e22;background:#1c1113}
+  .empty{color:var(--dim);padding:40px 0;text-align:center}
+  code{background:#162135;padding:1px 5px;border-radius:5px;font-size:12.5px;color:#9fd8ea}
+  .foot{position:fixed;right:18px;bottom:10px;color:#42526b;font-size:11.5px}
+
+  /* 表单 */
+  label{display:block;font-size:12px;color:var(--dim);margin:14px 0 6px;letter-spacing:.4px}
+  input[type=text],textarea,select{width:100%;background:#0b1322;border:1px solid #22304a;color:var(--txt);
+    border-radius:9px;padding:9px 11px;font:inherit;font-size:13.5px;outline:none}
+  input:focus,textarea:focus,select:focus{border-color:#2f6b86;box-shadow:0 0 0 2px #123a4a}
+  textarea{resize:vertical;min-height:60px;line-height:1.55}
+  .hint{font-size:11.5px;color:#6f7f96;margin-top:5px;line-height:1.5}
+  .rule-row{display:flex;gap:8px;margin-bottom:7px}
+  .rule-row input{flex:1}
+  .rule-row button{padding:0 11px;color:var(--dim)}
+  .pit{font-size:11.5px;color:#7d8ca3;line-height:1.75;background:#0c1420;border:1px dashed #22304a;
+    border-radius:10px;padding:11px 13px;margin-top:14px}
+  .pit b{color:#c39a5a;font-weight:500}
+  .preview{position:sticky;top:0}
+  .pv-card{background:linear-gradient(180deg,#121c2e,#0b1420);border:1px solid #26456b;border-radius:14px;
+    padding:16px 18px;overflow:hidden;position:relative}
+  .pv-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cyan)}
+  .pv-card .t{font-size:16px;margin:0 0 3px}
+  .pv-card .s{color:var(--dim);font-size:12.5px;margin-bottom:12px}
+  .pv-card .q{border-left:2px solid #2f6b86;padding:8px 12px;background:#0a1320;color:#cfe3f5;
+    border-radius:0 8px 8px 0;font-size:13px;line-height:1.6;margin-bottom:10px}
+  .warnbox{margin-top:12px}
+  .warnbox div{background:#1a1710;border:1px solid #3d3320;color:#e8cf9a;border-radius:9px;
+    padding:8px 11px;font-size:12.5px;margin-bottom:7px;line-height:1.5}
+  .okbox{background:#0e1d18;border:1px solid #1e4a3a;color:#bfe9d3;border-radius:9px;padding:8px 11px;font-size:12.5px}
+  .askmask{position:fixed;inset:0;background:rgba(5,9,15,.72);display:flex;align-items:center;justify-content:center;z-index:50}
+  .askbox{background:#111a26;border:1px solid #24344a;border-radius:14px;padding:22px 24px;max-width:470px;width:92%;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+  .askbox h3{margin:0 0 8px;font-size:16px}
+  .askbox p{color:#9fb2c9;font-size:13px;line-height:1.7;margin:0 0 16px}
+</style>
+</head>
+<body>
+<header>
+  <h1>工作台 · 场景 <span id="subtitle"></span></h1>
+  <div class="spacer"></div>
+  <span class="chip live" id="active" style="display:none"></span>
+  <span class="chip" id="health"><i class="dot"></i><b id="health-txt">检查中…</b></span>
+  <button onclick="load(true)">刷新</button>
+  <button class="primary" onclick="openRoot()">打开工作台目录</button>
+</header>
+
+<main>
+  <aside>
+    <button class="newbtn" onclick="openEditor()">＋ 场景编辑</button>
+
+    <div class="side-title">场景</div>
+    <div id="list"></div>
+
+    <div class="side-title">不带角色</div>
+    <div class="scene" id="blankentry" onclick="goBlank()">
+      <span class="dot" style="background:#94a3b8"></span>
+      <div class="meta">
+        <div class="n">不带角色 <span class="badge" id="blankstate">未启用</span></div>
+        <div class="d">回到 DSH 原生人格</div>
+      </div>
+    </div>
+
+    <div class="side-title">流程</div>
+    <div class="scene" id="propentry" onclick="openProps()">
+      <span class="dot" style="background:#fbbf24"></span>
+      <div class="meta">
+        <div class="n">改动申请 <span class="count" id="propcount">0</span></div>
+        <div class="d">改卡前先提申请</div>
+      </div>
+    </div>
+
+    <div class="side-note">点场景看卡片，点「场景编辑」改卡。<br>改完点「设为当前」才会生效。</div>
+  </aside>
+  <section class="pane" id="pane"><div class="empty">读取中…</div></section>
+</main>
+<div class="foot" id="foot"></div>
+<div id="ask" class="askmask" style="display:none"><div class="askbox">
+  <h3 id="asktitle">这张卡有没保存的改动</h3>
+  <p id="asktext">切走之前，先把改动存下来吗？</p>
+  <div class="row">
+    <button class="good" onclick="askAnswer('save')">保存再走</button>
+    <button class="bad" onclick="askAnswer('drop')">不保存，丢掉这次改动</button>
+    <button onclick="askAnswer('cancel')">取消</button>
+  </div>
+</div></div>
+
+<script>
+const HUE=['#38d0f0','#a78bfa','#34d399','#fbbf24','#f472b6','#60a5fa','#f87171','#2dd4bf','#c084fc'];
+function colorOf(n){let h=0;for(const c of n)h=(h*31+c.codePointAt(0))%997;return HUE[h%HUE.length];}
+let DATA=null, VIEW='overview', CUR=null, EDIT=null, SAVED_MSG='';
+
+const BLANK={serve:'',goal:'',role:'',deliver:'',rules:[],tone:'',read:['定位卡.md','项目信息.md 的 §0'],assets:'',partner:'',trigger:''};
+const RULE_CANDS=[
+ '不擅自扩大改动范围','不确定就停下来问，不猜','不删除或覆盖没备份的文件',
+ '先给结论，再给过程','只交付成品，半成品先说差什么','每条结论带出处或文件路径',
+ '改完必须跑一遍验证','不自动试跑，要跑先说会动什么','一次只做一件事，做完再报',
+ '有疑问列出来问，不要自己编','写进记忆的内容必须是已确认的事实','同一时刻只服务一个场景，不跨场景改文件'
+];
+const TEMPLATES={
+  '导演型':{serve:'我，负责出片的人',goal:'把内容做成能直接发的片子',role:'视频导演',deliver:'带音效的成片；时长由内容定',rules:['不自动试跑','只交付成品','不确定就停下来问'],tone:'说人话，不堆术语',read:['定位卡.md','项目信息.md 的 §0']},
+  '运维型':{serve:'我，管这台机器的人',goal:'环境能稳定跑，出问题能查',role:'系统运维',deliver:'可运行的环境 + 每条变更一行记录',rules:['改前先备份','不碰生产库','每条变更留记录'],tone:'先给结论，再给命令',read:['定位卡.md','项目信息.md 的 §0','_索引.md']},
+  '研究型':{serve:'我，要拿结论去做事的人',goal:'把一堆资料收敛成能用的结论',role:'资料助理',deliver:'带出处的结论；没出处的地方标存疑',rules:['没有出处不写','不确定就标存疑','先结论后过程'],tone:'克制，不用形容词撑场面',read:['定位卡.md','项目信息.md 的 §0','目录的 _索引.md']},
+  '空白':{serve:'',goal:'',role:'',deliver:'',rules:[],tone:'',read:['定位卡.md','项目信息.md 的 §0']}
+};
+
+async function load(manual){
+  if(window.__WB_DATA__){DATA=window.__WB_DATA__;render();return;}
+  try{const r=await fetch('api/state',{cache:'no-store'});DATA=await r.json();}
+  catch(e){document.getElementById('pane').innerHTML='<div class="empty">读不到数据：'+e+'</div>';return;}
+  render();
+  if(manual)flash();
+}
+function flash(){const b=document.querySelectorAll('header button')[0];b.textContent='已刷新';setTimeout(()=>b.textContent='刷新',900);}
+function get(n){return DATA.scenarios.find(x=>x.name===n);}
+
+function render(){
+  const s=DATA.scenarios||[],issues=DATA.issues||[];
+  document.getElementById('subtitle').textContent=(s.filter(x=>!x.template).length)+' 个场景 · '+(DATA.root||'');
+  const fails=issues.filter(i=>i.level==='FAIL').length,warns=issues.filter(i=>i.level==='WARN').length;
+  const chip=document.getElementById('health');
+  chip.className='chip '+(fails?'bad':(warns?'warn':''));
+  document.getElementById('health-txt').textContent=fails?('体检 '+fails+' 项不通过'):(warns?('体检通过 · '+warns+' 项提醒'):'体检全部达标');
+  const act=document.getElementById('active');
+  const bl=document.getElementById('blankstate');
+  if(bl)bl.textContent=DATA.blank?'生效中':'点此切换';
+  if(DATA.blank){act.className='chip';act.style.display='';const pv=DATA.previous&&get(DATA.previous)?' <a href="#" onclick="activateCard(\''+esc(DATA.previous)+'\');return false" style="color:#7cc4ff;margin-left:6px">切回 '+esc(DATA.previous)+'</a>':'';act.innerHTML='不带角色 · DSH 原生人格'+pv;}
+  else if(DATA.active){act.className='chip live';act.style.display='';act.innerHTML='当前生效：<b>'+esc(DATA.active)+'</b> <a href="#" onclick="deactivateCard();return false" style="color:#8b98ad;margin-left:6px">停用</a>';}
+  else {
+    act.className='chip';act.style.display='';
+    const pv=DATA.previous&&get(DATA.previous)?' <a href="#" onclick="activateCard(\''+esc(DATA.previous)+'\');return false" style="color:#7cc4ff;margin-left:6px">切回 '+esc(DATA.previous)+'</a>':'';
+    act.innerHTML='未启用角色卡 · DSH 原生人格'+pv;
+  }
+  document.getElementById('propcount').textContent=DATA.proposals||0;
+  const be=document.getElementById('blankentry');if(be)be.classList.toggle('on',!!DATA.blank||!DATA.active);
+  const pe=document.getElementById('propentry');if(pe)pe.classList.toggle('on',VIEW==='props');
+  document.getElementById('foot').textContent='刷新于 '+(DATA.generatedAt||'');
+
+  document.getElementById('list').innerHTML=s.filter(x=>x.name!=='空白').map(x=>`
+    <div class="scene ${VIEW==='scene'&&CUR===x.name?'on':''}" onclick="openScene('${esc(x.name)}')" title="${esc(x.name)}">
+      <span class="dot" style="background:${colorOf(x.name)}"></span>
+      <div class="meta">
+        <div class="n"><em>${esc(x.name)}</em>${x.template?'<span class="badge">模板</span>':''}${x.problem?'<span class="badge red">缺件</span>':''}${DATA.active===x.name?'<span class="badge blue">生效</span>':''}</div>
+        <div class="d">${esc(x.identity.role||'—')}</div>
+      </div>
+    </div>`).join('')||'<div class="empty" style="padding:18px 0;font-size:12.5px">还没有场景</div>';
+
+  const pane=document.getElementById('pane');
+  if(VIEW==='editor')pane.innerHTML=editorView();
+  else if(VIEW==='scene')pane.innerHTML=detail(get(CUR)||{name:'?',identity:{},card:{},info:{sections:[]},size:{main:0,handoff:0,card:0},limits:{main:26214400,handoff:4096,card:2048},files:{}});
+  else if(VIEW==='props')pane.innerHTML=propsView();
+  else pane.innerHTML=overview();
+  if(VIEW==='editor'){const pv=document.getElementById('pv');if(pv)pv.innerHTML=pvInner();wireForm();}
+}
+
+function isDirty(){if(!EDIT||!EDIT.fields)return false;const f=EDIT.fields;
+  return [f.serve,f.goal,f.role,f.deliver,f.tone,f.assets,f.trigger,f.partner].some(Boolean)||(f.rules||[]).filter(Boolean).length>0;}
+function guard(){return VIEW!=='editor'||!isDirty()||confirm('离开会丢掉没保存的修改，确定？');}
+let ASK_RESOLVE=null;
+function askSave(title,text){
+  document.getElementById('asktitle').textContent=title||'这张卡有没保存的改动';
+  document.getElementById('asktext').textContent=text||'切走之前，先把改动存下来吗？';
+  document.getElementById('ask').style.display='flex';
+  return new Promise(res=>{ASK_RESOLVE=res;});
+}
+function askAnswer(v){
+  document.getElementById('ask').style.display='none';
+  const r=ASK_RESOLVE;ASK_RESOLVE=null;if(r)r(v);
+}
+async function leaveEditor(destText){
+  if(VIEW!=='editor'||!isDirty())return true;
+  const v=await askSave('这张卡有没保存的改动',destText||'切走之前，先把改动存下来吗？没保存的改动会丢。');
+  if(v==='cancel')return false;
+  if(v==='save'){await save(false);}
+  return true;
+}
+function goBlank(){
+  (async()=>{
+    if(!(await leaveEditor('切到空白卡之前，先把改动存下来吗？没保存的改动会丢。')))return;
+    const r=await fetch('api/scene/activate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:'空白'})});
+    const j=await r.json();
+    await reloadState();await load();
+    if(!j.ok)alert(j.msg||'切换失败');
+  })();
+}
+async function openScene(n){
+  if(!(await leaveEditor('切到「'+n+'」之前，先把改动存下来吗？')))return;
+  VIEW='scene';CUR=n;render();
+}
+function openEditor(name){
+  const x=name?get(name):null;
+  EDIT={name:name||'',create:!name,template:'空白',fields:x?{
+    serve:x.identity.serve||'',goal:x.identity.goal||'',role:x.identity.role||'',deliver:x.identity.deliver||'',
+    rules:(x.identity.rules||[]).slice(0,5),tone:x.identity.tone||'',read:(x.identity.read||[]).slice(0,4),
+    assets:x.card['资产地图']||'',partner:x.card['协作对象']||'',trigger:x.card['触发词']||''
+  }:JSON.parse(JSON.stringify(BLANK))};
+  VIEW='editor';SAVED_MSG='';render();
+}
+async function openProps(){
+  if(!(await leaveEditor('去看改动申请之前，先把这张卡的改动存下来吗？')))return;
+  VIEW='props';render();loadProps();
+}
+let PROPS=[];
+async function loadProps(){
+  const r=await fetch('api/proposals',{cache:'no-store'});const j=await r.json();PROPS=j.items||[];
+  if(VIEW==='props')document.getElementById('pane').innerHTML=propsView();
+}
+function useTemplate(k){
+  const t=TEMPLATES[k];if(!t)return;
+  if(isDirty()&&!confirm('换模板会把下面已填的字段覆盖掉，继续？')){render();return;}
+  EDIT.fields=Object.assign({},JSON.parse(JSON.stringify(BLANK)),JSON.parse(JSON.stringify(t)));
+  EDIT.template=k;if(VIEW==='editor'){document.getElementById('pane').innerHTML=editorView();wireForm();
+    const pv=document.getElementById('pv');if(pv)pv.innerHTML=pvInner();}
+}
+
+/* ---------- 视图 ---------- */
+
+function overview(){
+  const s=(DATA.scenarios||[]).filter(x=>!x.template),issues=DATA.issues||[];
+  let h='<div class="row" style="margin-bottom:14px"><h2 class="scene-h" style="font-size:17px">全部场景</h2><div class="spacer"></div><button onclick="openEditor()">＋ 新建场景</button></div>';
+  if(!s.length)h+='<div class="empty">还没有场景。点左上角「场景编辑」，选个模板三十秒建一个。</div>';
+  else h+='<div class="grid">'+s.map(x=>{
+    const pct=Math.min(100,x.size.main/x.limits.main*100),cls=pct>=100?'over':(pct>=80?'hot':'');
+    return `<div class="card" style="--c:${colorOf(x.name)}" onclick="openScene('${esc(x.name)}')">
+      <h3>${esc(x.name)}</h3>
+      <div class="sub">${esc(x.identity.role||'（还没写身份）')}</div>
+      <div class="hand">${esc(x.info.handoff||'（§0 交接是空的，收工记得写）')}</div>
+      <div class="bar ${cls}"><i style="width:${pct.toFixed(1)}%"></i></div>
+      <div class="meter"><span>项目信息 ${kb(x.size.main)} / 25KB</span><span>${x.updated}</span></div>
+    </div>`;}).join('')+'</div>';
+  h+='<div class="panel" style="margin-top:18px"><h4>体检</h4>';
+  h+=issues.length?issues.map(i=>`<div class="issue ${i.level==='FAIL'?'':'w'}"><b>${i.level}</b> · ${esc(i.where)} — ${esc(i.msg)}</div>`).join(''):'<div class="ok">全部达标。</div>';
+  return h+'</div>';
+}
+
+function detail(x){
+  const pctMain=Math.min(100,(x.size.main||0)/x.limits.main*100),pctHand=Math.min(100,(x.size.handoff||0)/x.limits.handoff*100);
+  const id=x.identity||{},card=x.card||{};
+  const fileRows=Object.entries(x.files||{}).map(([k,v])=>`<span class="file ${v?'have':'miss'}">${v?'✓':'✗'} ${k}</span>`).join('');
+  const secs=((x.info&&x.info.sections)||[]).filter(s=>s.lines.length).map(s=>
+    `<div class="kv"><div class="k">${esc(s.title)}</div><div>${s.lines.map(l=>esc(l)).join('<br>')}</div></div>`).join('')
+    ||'<div class="kv" style="color:#6f7f96">（§一 之后还没写）</div>';
+  const ruleLine=(id.rules||[]).length?id.rules.map(r=>'· '+esc(r)).join('<br>'):'—';
+  return `
+  <div class="row" style="margin-bottom:16px">
+    <button onclick="VIEW='overview';render()">← 全部场景</button><div class="spacer"></div>
+    ${x.template?'':'<button class="primary" onclick="openEditor(\''+esc(x.name)+'\')">编辑身份卡</button>'}
+    ${x.template?'':(DATA.active===x.name?'<button onclick="deactivateCard()">停用角色卡</button><button class="good" onclick="goBlank()">收工 → 空白</button>':'<button class="good" onclick="activateCard(\''+esc(x.name)+'\')">设为当前</button>')}
+    <button onclick="openSceneDir('${esc(x.name)}')">打开目录</button>
+    <button onclick="copy('${esc(x.dir)}')">复制路径</button>
+  </div>
+  <div class="row" style="align-items:flex-end">
+    <h2 class="scene-h">${esc(x.name)}</h2>
+    ${id.role?'<span class="tag">'+esc(id.role)+'</span>':''}
+    ${x.id?'<span class="tag">'+esc(x.id)+'</span>':''}
+    ${DATA.active===x.name?'<span class="badge blue">当前生效</span>':''}
+    ${x.problem?'<span class="tag" style="color:#f3b6b6;border-color:#4a1e22">四件套不全</span>':''}
+  </div>
+  <div class="cols">
+    <div>
+      <div class="panel" style="margin-bottom:14px"><h4>§0 当前交接</h4>
+        <div class="quote">${esc((x.info&&x.info.handoff)||'（空。收工写一句「做到哪、下一步」。）')}</div>
+        <div class="bar ${pctHand>=100?'over':(pctHand>=80?'hot':'')}" style="margin-top:14px"><i style="width:${pctHand.toFixed(1)}%"></i></div>
+        <div class="meter"><span>§0 ${b(x.size.handoff||0)} / 4KB</span><span>${pctHand.toFixed(0)}%</span></div></div>
+      <div class="panel"><h4>身份卡</h4>
+        <div class="kv"><div class="k">服务对象</div><div>${esc(id.serve||'—')}${id.goal?'<br><span style="color:#8b98ad">这次要：</span>'+esc(id.goal):''}</div></div>
+        <div class="kv"><div class="k">我是谁</div><div>${esc(id.role||'—')}</div></div>
+        <div class="kv"><div class="k">交付</div><div>${esc(id.deliver||'—')}</div></div>
+        <div class="kv"><div class="k">规矩</div><div>${ruleLine}</div></div>
+        <div class="kv"><div class="k">口吻</div><div>${esc(id.tone||'—')}</div></div>
+        <div class="kv"><div class="k">必读</div><div>${(id.read||[]).length?id.read.map(r=>esc(r)).join('<br>'):'—'}</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="panel" style="margin-bottom:14px"><h4>定位卡</h4>${cardRows(card)}</div>
+      <div class="panel"><h4>记忆体积</h4>
+        <div class="bar ${pctMain>=100?'over':(pctMain>=80?'hot':'')}"><i style="width:${pctMain.toFixed(1)}%"></i></div>
+        <div class="meter"><span>项目信息.md ${kb(x.size.main)} / 25KB</span><span>${pctMain.toFixed(0)}%</span></div>
+        <div class="files">${fileRows}</div></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:14px"><h4>项目信息（§一 起）</h4>${secs}</div>`;
+}
+function cardRows(c){
+  let out='';
+  for(const k of ['身份职责','资产地图','铁律','上次进度','协作对象','触发词']){
+    if(!(k in c))continue;
+    out+=`<div class="kv"><div class="k">${k}</div><div>${esc(c[k]||'—')}</div></div>`;
+  }
+  return out||'<div class="kv" style="color:#6f7f96">定位卡还是空的</div>';
+}
+
+/* ---------- 编辑器 ---------- */
+
+function editorView(){
+  const e=EDIT,f=e.fields;
+  const sceneOpts=(DATA.scenarios||[]).filter(x=>!x.template).map(x=>`<option value="${esc(x.name)}" ${e.name===x.name?'selected':''}>${esc(x.name)}</option>`).join('');
+  const rules=(f.rules||[]);
+  return `
+  <div class="row" style="margin-bottom:6px"><h2 class="scene-h" style="font-size:19px">场景编辑</h2><div class="spacer"></div>
+    <button onclick="VIEW='overview';render()">取消</button></div>
+  <div class="hint" style="margin-bottom:14px">填表 → 生成可编辑的身份卡（一个项目一张）。保存后立刻能在场景视图里看到。</div>
+  <div class="cols">
+    <div class="panel">
+      <h4>1 · 是哪个场景</h4>
+      <label>选择已有场景，或新建</label>
+      <select id="f-pick" onchange="pickScene(this.value)">
+        <option value="__new__" ${e.create?'selected':''}>＋ 新建场景</option>
+        ${sceneOpts}
+      </select>
+      ${e.create?`
+        <label>场景名</label>
+        <input id="f-name" type="text" placeholder="例：公众号写作" value="${esc(e.name)}" />
+        <label>起步模板</label>
+        <select id="f-tpl" onchange="useTemplate(this.value)">
+          ${Object.keys(TEMPLATES).map(k=>`<option ${e.template===k?'selected':''}>${k}</option>`).join('')}
+        </select>
+        <div class="hint">模板只是起点，下面的字都能改。选「空白」就从零写。</div>`:
+        `<div class="hint">正在改「${esc(e.name)}」的卡。保存前旧版会自动备份到 <code>备份\\</code>。</div>`}
+
+      <h4 style="margin-top:22px">2 · 人这一侧</h4>
+      <label>人是谁（服务对象）</label>
+      <input id="f-serve" type="text" placeholder="例：我，负责出片的人" value="${esc(f.serve)}" />
+      <label>这次要什么（一句话目标，≤50 字）</label>
+      <textarea id="f-goal" rows="2" placeholder="例：把这条 12 分钟的视频拆成可执行的工作台">${esc(f.goal)}</textarea>
+
+      <h4 style="margin-top:22px">3 · AI 这一侧</h4>
+      <label>我是谁（角色）</label>
+      <input id="f-role" type="text" placeholder="例：视频导演" value="${esc(f.role)}" />
+      <label>交付（交什么 + 什么算完）</label>
+      <textarea id="f-deliver" rows="2" placeholder="例：带音效的成片；时长由内容定">${esc(f.deliver)}</textarea>
+      <label>铁律（≤5 条，能否决的句子）</label>
+      <div id="f-rules">${rules.map((r,i)=>`<div class="rule-row"><input type="text" value="${esc(r)}" oninput="setRule(${i},this.value)" placeholder="例：不自动试跑"/><button onclick="delRule(${i})">×</button></div>`).join('')}</div>
+      <button onclick="addRule()" style="margin-top:2px">＋ 加一条</button>
+      <div class="hint" style="margin-top:8px">拿不准边界？点下面任意一条就加进去；一条都不想用就留空，卡片保持原样，不会写占位话。<br>
+      库在 <code>工具\铁律库.md</code>，想加条目直接改那个文件。</div>
+      ${(DATA.ruleLibrary&&DATA.ruleLibrary.length?DATA.ruleLibrary:[{group:'通用',items:RULE_CANDS}]).map(g=>`
+        <div style="margin-top:8px"><span style="font-size:11px;color:#6f7f96">${esc(g.group)}</span>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${g.items.map(r=>`<button class="chipbtn" data-r="${esc(r)}" onclick="addRuleText(this.dataset.r)" style="background:#121a26;border:1px solid #24344a;color:#9fb2c9;border-radius:14px;padding:4px 9px;font-size:11.5px;cursor:pointer">＋ ${esc(r)}</button>`).join('')}</div></div>`).join('')}
+      <label>口吻</label>
+      <input id="f-tone" type="text" placeholder="例：说人话，不堆术语" value="${esc(f.tone)}" />
+      <label>必读（开工先读哪几个文件，一行一个）</label>
+      <textarea id="f-read" rows="3">${esc((f.read||[]).join('\n'))}</textarea>
+
+      <h4 style="margin-top:22px">4 · 定位卡「可选项」</h4>
+      <label>资产地图（文件都在哪个目录）</label>
+      <input id="f-assets" type="text" placeholder="例：D:\\工作\\公众号\\" value="${esc(f.assets)}" />
+      <label>触发词</label>
+      <input id="f-trigger" type="text" placeholder="例：代码视频 / 开工" value="${esc(f.trigger)}" />
+      <label>协作对象</label>
+      <input id="f-partner" type="text" placeholder="例：设计杂活 / 本地电脑" value="${esc(f.partner)}" />
+    </div>
+
+    <div class="preview">
+      <div class="panel">
+        <h4>预览（保存后长这样）</h4>
+        <div id="pv"></div>
+        <div class="pit">
+          <b>容易踩的坑（点开前先看）</b><br>
+          · 别写「专业、高效、严谨」——AI 读了没有行为变化<br>
+          · 铁律要能否决：<code>不 XXX</code> / <code>必须 XXX</code>，别写「认真负责」<br>
+          · 交付要写「什么算完」，不写「做好」<br>
+          · 必读只写文件，不写感受<br>
+          · 卡片 ≤2KB，超了开场读不进去<br>
+          · §0 交接别写进卡里，那是每轮变的
+        </div>
+        ${SAVED_MSG?`<div class="warnbox">${SAVED_MSG}</div>`:''}
+        <div class="row" style="margin-top:14px">
+          <button class="good" onclick="save(false)">保存卡片</button>
+          <button class="primary" onclick="save(true)">保存并设为当前（生效到 DSH）</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button onclick="copyKickoff()">复制开工语</button>
+          <span class="hint">贴到新会话开头，AI 就知道自己是谁、先读什么</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function wireForm(){
+  const bind=(id,key)=>{const el=document.getElementById(id);if(el)el.oninput=()=>{EDIT.fields[key]=el.value;repaint();};};
+  bind('f-serve','serve');bind('f-goal','goal');bind('f-role','role');bind('f-deliver','deliver');
+  bind('f-tone','tone');bind('f-assets','assets');bind('f-trigger','trigger');bind('f-partner','partner');
+  const nm=document.getElementById('f-name');
+  if(nm)nm.oninput=()=>{EDIT.name=nm.value;repaint();};
+  const rd=document.getElementById('f-read');
+  if(rd)rd.oninput=()=>{EDIT.fields.read=rd.value.split('\n').map(s=>s.trim()).filter(Boolean);repaint();};
+}
+function pvInner(){
+  const f=EDIT.fields;
+  const rules=(f.rules||[]).filter(Boolean);
+  return `<div class="pv-card">
+    <div class="t">${esc(EDIT.name||'未命名场景')}</div>
+    <div class="s">${esc(f.role||'（还没写角色）')}</div>
+    <div class="q">${esc(f.serve||'（还没写服务对象）')}${f.goal?'<br><span style="color:#8b98ad">这次要：</span>'+esc(f.goal):''}</div>
+    <div class="kv"><div class="k">交付</div><div>${esc(f.deliver||'—')}</div></div>
+    <div class="kv"><div class="k">铁律</div><div>${rules.length?rules.map(r=>'· '+esc(r)).join('<br>'):'—'}</div></div>
+    <div class="kv"><div class="k">口吻</div><div>${esc(f.tone||'—')}</div></div>
+    <div class="kv"><div class="k">必读</div><div>${(f.read||[]).filter(Boolean).join('<br>')||'—'}</div></div>
+  </div>`;
+}
+function repaint(){const pv=document.getElementById('pv');if(pv)pv.innerHTML=pvInner();}
+
+function setRule(i,v){EDIT.fields.rules[i]=v;repaint();}
+function addRuleText(v){
+  const rs=EDIT.fields.rules||(EDIT.fields.rules=[]);
+  if(rs.includes(v)){return;}
+  if(rs.length>=5){alert('铁律最多 5 条，先删一条再加。');return;}
+  rs.push(v);render();
+}
+function addRule(){if((EDIT.fields.rules||[]).length>=5)return;EDIT.fields.rules.push('');render();}
+function delRule(i){EDIT.fields.rules.splice(i,1);render();}
+async function pickScene(v){
+  if(v==='__new__'){
+    if(!(await leaveEditor('新建场景会离开当前这张卡，先保存吗？'))){render();return;}
+    EDIT={name:'',create:true,template:'空白',fields:JSON.parse(JSON.stringify(BLANK))};render();return;
+  }
+  openEditor(v);
+}
+function collect(){
+  const f=EDIT.fields;
+  return {name:(document.getElementById('f-name')||{}).value||EDIT.name,create:EDIT.create,
+    fields:{serve:f.serve,goal:f.goal,role:f.role,deliver:f.deliver,rules:(f.rules||[]).filter(Boolean),
+      tone:f.tone,read:(f.read||[]).filter(Boolean),assets:f.assets,partner:f.partner,trigger:f.trigger}};
+}
+async function activateCard(n){
+  const r=await fetch('api/scene/activate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:n})});
+  const j=await r.json();
+  if(!j.ok){alert(j.msg||'设置失败');return;}
+  await reloadState();await load();
+  alert(j.persona==='written'?('已生效：'+n):('工作台内已生效；DSH 人格那一步没成（'+(j.msg||j.persona)+'）'));
+}
+async function deactivateCard(){
+  if(!confirm('停用角色卡？DSH 回到原本的人格与习惯，卡片文件保留，随时能再开。'))return;
+  const r=await fetch('api/scene/deactivate',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
+  const j=await r.json();
+  await reloadState();await load();
+  alert(j.persona==='removed'?'已停用，DSH 回到原生人格。':('工作台内已停用；'+(j.msg||'')));
+}
+async function save(alsoActivate){
+  const payload=collect();
+  const r=await fetch('api/scene/save',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+  const j=await r.json();
+  if(!j.ok){SAVED_MSG='<div>保存失败：'+esc(j.msg)+'</div>';render();return;}
+  let extra='';
+  if(alsoActivate){
+    const r2=await fetch('api/scene/activate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:j.name})});
+    const j2=await r2.json();
+    extra='<div class="okbox">已设为当前场景'+(j2.persona==='written'?'，并写入 DSH 人格文件':'（工作台内生效；DSH 人格：'+esc(j2.msg||j2.persona)+'）')+'</div>';
+  } else if(j.activated && j.activated.persona==='written'){
+    extra='<div class="okbox">这张卡正在生效，已用新内容刷新 DSH 人格。</div>';
+  }
+  const warns=(j.warnings||[]).map(w=>'<div>'+esc(w)+'</div>').join('');
+  SAVED_MSG=(warns?'<div class="okbox">已保存。这几处建议改改：</div>'+warns:'<div class="okbox">已保存，卡片没有明显问题。</div>')+extra;
+  await reloadState();
+  EDIT.create=false;EDIT.name=j.name;
+  VIEW='scene';CUR=j.name;
+  await load();
+  SAVED_MSG=(warns?'<div class="okbox">已保存。建议改这几处：</div>'+warns:'')+extra;
+  VIEW='editor';render();
+  setTimeout(()=>{SAVED_MSG='';if(VIEW==='editor')render();},9000);
+}
+async function reloadState(){
+  if(window.__WB_DATA__)return;
+  try{const r=await fetch('api/state',{cache:'no-store'});DATA=await r.json();}catch(e){}
+}
+function copyKickoff(){
+  const f=EDIT.fields;
+  const t=`你是${f.role||'（角色未填）'}。服务对象：${f.serve||'（未填）'}${f.goal?'；这次要：'+f.goal:''}。\n`+
+    `开工先读：${(f.read||[]).filter(Boolean).join('、')||'定位卡.md、项目信息.md §0'}。\n`+
+    `铁律：${(f.rules||[]).filter(Boolean).join('；')||'（未填）'}。交付：${f.deliver||'（未填）'}。\n`+
+    `口吻：${f.tone||'（未填）'}。`;
+  if(navigator.clipboard)navigator.clipboard.writeText(t);
+  SAVED_MSG='<div class="okbox">开工语已复制。</div>';render();
+  setTimeout(()=>{SAVED_MSG='';if(VIEW==='editor')render();},3000);
+}
+
+/* ---------- 提案 ---------- */
+
+function propsView(){
+  const scenes=(DATA.scenarios||[]).filter(x=>!x.template).map(x=>`<option>${esc(x.name)}</option>`).join('');
+  let h=`<div class="row" style="margin-bottom:12px"><h2 class="scene-h" style="font-size:19px">改动申请</h2><div class="spacer"></div>
+    <button onclick="openPropDir()">打开提案目录</button></div>
+    <div class="hint" style="margin-bottom:14px">改身份卡之前先出一份申请：改哪条、为什么、改成什么。你点同意我才动。反过来你发来的改点，也先落成申请再改。</div>
+    <div class="panel" style="margin-bottom:16px">
+      <h4>＋ 新建申请</h4>
+      <div class="cols" style="margin-top:0">
+        <div>
+          <label>场景</label>
+          <select id="p-scene">${scenes||'<option>（先建一个场景）</option>'}</select>
+          <label>类型</label>
+          <select id="p-kind"><option>改进</option><option>改回</option></select>
+          <label>现状（现在卡片上写的是什么）</label>
+          <input id="p-now" type="text" placeholder="例：铁律只有两条，没有交付自检" />
+        </div>
+        <div>
+          <label>建议（想改成什么）</label>
+          <textarea id="p-suggest" rows="3" placeholder="例：加一条「交付前自己先看一遍」"></textarea>
+          <label>影响（改了会怎样）</label>
+          <input id="p-impact" type="text" placeholder="例：卡片多一行，约 +12 字" />
+          <button class="primary" style="margin-top:12px" onclick="createProposal()">提交申请</button>
+        </div>
+      </div>
+    </div>`;
+  if(!PROPS.length)h+='<div class="empty">现在没有待处理的申请。</div>';
+  else h+=PROPS.map(p=>`<div class="panel" style="margin-bottom:12px">
+      <h4>${esc(p.scene||'（未写场景）')} · ${esc(p.kind||'改进')}</h4>
+      <div class="kv"><div class="k">现状</div><div>${esc(p.now||'—')}</div></div>
+      <div class="kv"><div class="k">建议</div><div>${esc(p.suggest||'—')}</div></div>
+      <div class="row" style="margin-top:10px">
+        <button class="good" onclick="decide('${esc(p.file)}','accept')">同意</button>
+        <button class="bad" onclick="decide('${esc(p.file)}','reject')">驳回</button>
+        <span class="hint">${esc(p.file)}</span>
+      </div></div>`).join('');
+  return h;
+}
+async function createProposal(){
+  const v=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  const payload={scene:v('p-scene'),kind:v('p-kind'),now:v('p-now'),suggest:v('p-suggest'),impact:v('p-impact')};
+  const r=await fetch('api/proposals/create',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+  const j=await r.json();
+  if(!j.ok){alert(j.msg);return;}
+  await loadProps();await load();
+}
+async function decide(file,decision){
+  await fetch('api/proposals/decide',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({file,decision})});
+  await loadProps();await load();
+}
+async function openSceneDir(n){await fetch('api/open',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kind:'scene',name:n})});}
+async function openRoot(){await fetch('api/open',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kind:'root'})});}
+async function openPropDir(){await fetch('api/open',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kind:'prop'})});}
+
+/* ---------- 工具 ---------- */
+function kb(n){n=n||0;return n>=1024?(n/1024).toFixed(1)+'KB':n+'B';}
+function b(n){n=n||0;return n>=1024?(n/1024).toFixed(1)+'KB':n+'B';}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function copy(t){navigator.clipboard.writeText(t);}
+
+load();
+</script>
+</body>
+</html>
