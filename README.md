@@ -4,6 +4,8 @@
 
 ![工作台界面：左边是场景列表，右边是场景卡片和记忆体积条](docs/overview.png)
 
+> 仓库：[GitHub](https://github.com/ayouyudeme/workbench-template) ｜ [Gitee 镜像](https://gitee.com/ayouyudeme/workbench-template)
+
 ## 它解决的是这个场面
 
 每次开新会话，你都要重新交代一遍：
